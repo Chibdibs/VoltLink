@@ -29,4 +29,24 @@ VoltLink uses a blockchain-based system to securely and transparently record tra
 To participate in VoltLink, follow these steps:
 
 1. **Installation**
-   Clone this repository to your local machine:
+   Clone this repository to your local machine.
+
+2. **Setup**
+Navigate to the VoltLink directory and install the required dependencies:
+
+3. **Run**
+Start the VoltLink platform:
+
+
+
+# How to Contribute
+
+We welcome contributions from the community! If you're interested in contributing to VoltLink, please check out our [contributing guidelines](CONTRIBUTING.md) for more information on how to get started.
+
+## License
+
+VoltLink is released under the [MIT License](LICENSE).
+
+## Acknowledgments
+
+We thank all the contributors and the community for supporting this project. Together, we can make a significant impact on the world's energy systems and take a step closer to a sustainable future.
