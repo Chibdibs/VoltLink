@@ -31,14 +31,20 @@ class Blockchain:
         self.chain.append(genesis_block)
 
     def add_block(self, block, proof):
-        previous_hash = self.last_block.hash
-        if previous_hash != block.previous_hash:
+        """
+        A function that adds the block to the chain after verification.
+        Verification includes checking that the previous hash referred in the block
+        matches the hash of the latest block in the chain.
+        :param block:
+        :param proof:
+        :return:
+        """
+        if self.chain[-1].hash != block.previous_hash:
             return False
 
-        if not self.is_valid_proof(block, proof):
+        if not self.is_valid_proof(block, block.hash):
             return False
 
-        block.hash = proof
         self.chain.append(block)
         return True
 
@@ -86,10 +92,12 @@ class Blockchain:
                           previous_hash=last_block.hash,
                           nonce=0)
         proof = self.proof_of_work(new_block)
-        new_block.hash = proof # Explicitly set the block's hash attribute
-        self.add_block(new_block, proof)
-        self.unconfirmed_transactions = []
-        return new_block.index
+        new_block.hash = proof  # Explicitly set the block's hash attribute
+        if self.add_block(new_block):  # Adjusted to pass only the new block
+            self.unconfirmed_transactions = []  # Clear the list of unconfirmed transactions after unsuccessful mining
+            return new_block.index
+        else:
+            return False
 
     @property
     def last_block(self):
@@ -105,8 +113,6 @@ blockchain = Blockchain()
 @app.route('/chain', methods=['GET'])
 def get_chain():
     chain_data = [block.__dict__ for block in blockchain.chain]
-    # for block in blockchain.chain:
-    #     chain_data.append(block.__dict__)
     return jsonify(chain_data), 200
 
 
