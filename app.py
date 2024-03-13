@@ -4,13 +4,13 @@ from flask import Flask, jsonify, request
 
 
 class Block:
-    def __init__(self, index, transactions, timestamp, previous_hash, nonce=0, hash=None):
+    def __init__(self, index, transactions, timestamp, previous_hash, nonce=0, block_hash=None):
         self.index = index
         self.transactions = transactions
         self.timestamp = timestamp
         self.previous_hash = previous_hash
         self.nonce = nonce
-        self.hash = hash
+        self.block_hash = block_hash
 
     def compute_hash(self):
         block_string = f"{self.index}{self.timestamp}{self.previous_hash}{self.nonce}"
@@ -27,7 +27,7 @@ class Blockchain:
 
     def create_genesis_block(self):
         genesis_block = Block(0, [], time.time(), "0")
-        genesis_block.hash = genesis_block.compute_hash()
+        genesis_block.block_hash = genesis_block.compute_hash()
         self.chain.append(genesis_block)
 
     def add_block(self, block, proof):
@@ -39,12 +39,8 @@ class Blockchain:
         :param proof:
         :return:
         """
-        if self.chain[-1].hash != block.previous_hash:
+        if self.last_block.block_hash != block.previous_hash or not self.is_valid_proof(block, block.block_hash):
             return False
-
-        if not self.is_valid_proof(block, block.hash):
-            return False
-
         self.chain.append(block)
         return True
 
@@ -89,10 +85,10 @@ class Blockchain:
         new_block = Block(index=last_block.index + 1,
                           transactions=self.unconfirmed_transactions,
                           timestamp=time.time(),
-                          previous_hash=last_block.hash,
+                          previous_hash=last_block.block_hash,
                           nonce=0)
         proof = self.proof_of_work(new_block)
-        new_block.hash = proof  # Explicitly set the block's hash attribute
+        new_block.block_hash = proof  # Explicitly set the block's hash attribute
         if self.add_block(new_block):  # Adjusted to pass only the new block
             self.unconfirmed_transactions = []  # Clear the list of unconfirmed transactions after unsuccessful mining
             return new_block.index
