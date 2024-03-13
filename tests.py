@@ -14,6 +14,7 @@ class BlockchainTransactionTests(unittest.TestCase):
 
     def tearDown(self):
         self.flask_app.terminate()
+        self.flask_app.wait()
 
     def test_transaction_creation(self):
         """Test creating a new transaction via the API"""
