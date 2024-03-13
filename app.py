@@ -49,7 +49,7 @@ class Blockchain:
         return self.last_block.index + 1  # Assuming the next block will contain the transaction
 
     @staticmethod
-    def proof_of_work(self, block):
+    def proof_of_work(block):
         """
         Function that tries different values of nonce to get a hash
         that satisfies our difficulty criteria.
@@ -65,7 +65,7 @@ class Blockchain:
         return computed_hash
 
     @staticmethod
-    def is_valid_proof(self, block, block_hash):
+    def is_valid_proof(block, block_hash):
         """
         Check if block_hash is valid hash of block and satisfies
         the difficulty criteria.
@@ -105,6 +105,8 @@ app = Flask(__name__)
 
 blockchain = Blockchain()
 
+# Add Flask routes for API endpoints
+
 
 @app.route('/chain', methods=['GET'])
 def get_chain():
@@ -120,11 +122,25 @@ def new_transaction():
     if not all(k in values for k in required_fields):
         return 'Missing values', 400
 
-    index = blockchain.add_new_transaction(values)
-    response = {'message': f'Transaction will be added to Block {index}'}
+    block_index = blockchain.add_new_transaction(values)
+    response = {'message': f'Transaction will be added to Block {block_index}'}
     return jsonify(response)
 
-# Add Flask routes for API endpoints
+
+@app.route('/')
+def index():
+    return '''
+    <h1>Welcome to the VoltLink Blockchain</h1>
+    <p>A simple blockchain implementation for peer-to-peer renewable energy trading.</p>
+    <ul>
+        <li><a href="/chain">View the current chain here</a></li>
+        <li>Use a tool like Postman or cURL to interact with the API:</li>
+        <ul>
+            <li>Submit a new transaction with a POST request to <code>/transactions/new</code>.</li>
+            <li>Mine a new block with a GET request to <code>/mine</code>.</li>
+        </ul>
+    </ul>
+     '''
 
 
 if __name__ == "__main__":
