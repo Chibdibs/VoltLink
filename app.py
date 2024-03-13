@@ -1,5 +1,7 @@
 import hashlib
 import time
+from urllib.parse import urlparse
+
 from flask import Flask, jsonify, request
 
 
@@ -21,6 +23,8 @@ class Blockchain:
     difficulty = 2  # difficulty of the proof of work algorithm
 
     def __init__(self):
+        self.nodes = set()  # A set to store the network's nodes
+        self.current_transactions = []
         self.unconfirmed_transactions = []
         self.chain = []
         self.create_genesis_block()
@@ -30,7 +34,7 @@ class Blockchain:
         genesis_block.block_hash = genesis_block.compute_hash()
         self.chain.append(genesis_block)
 
-    def add_block(self, block, proof):
+    def add_block(self, block):
         """
         A function that adds the block to the chain after verification.
         Verification includes checking that the previous hash referred in the block
@@ -53,7 +57,6 @@ class Blockchain:
         """
         Function that tries different values of nonce to get a hash
         that satisfies our difficulty criteria.
-        :param self:
         :param block:
         :return:
         """
@@ -69,7 +72,6 @@ class Blockchain:
         """
         Check if block_hash is valid hash of block and satisfies
         the difficulty criteria.
-        :param self:
         :param block:
         :param block_hash:
         :return:
@@ -95,9 +97,20 @@ class Blockchain:
         else:
             return False
 
+    def register_node(self, address):
+        """
+        Add a new node to the list of nodes.
+        :param node:
+        :return:
+        """
+        parsed_url = urlparse(address)
+        self.nodes.add(parsed_url.netloc)
+
     @property
     def last_block(self):
         return self.chain[-1]
+
+
 
 
 # Initialize Flask app
@@ -127,10 +140,58 @@ def new_transaction():
     return jsonify(response)
 
 
+@app.route('/nodes/register', methods=['POST'])
+def register_nodes():
+    values = request.get_json()
+    nodes = values.get('nodes')
+    if nodes is None:
+        return "Error: Please supply a valid list of nodes", 400
+
+    for node in nodes:
+        blockchain.register_node(node)
+
+    response = {
+        'message': 'New nodes have been added',
+        'total_nodes': list(blockchain.nodes),
+    }
+    return jsonify(response), 201
+
+
 @app.route('/mine', methods=['GET'])
 def mine():
+    # Step 1: (Optional) Validate unconfirmed transactions
+    # This step depends on your application's specific requirements
 
-    return jsonify({'message': 'New block mined successfully'}), 200
+    # Step 2: Create a new block
+    last_block = blockchain.last_block
+    new_block = Block(index=last_block.index + 1,
+                      transactions=blockchain.unconfirmed_transactions,
+                      timestamp=time.time(),
+                      previous_hash=last_block.block_hash)
+
+    # Step 3: Find a proof-of-work
+    proof = blockchain.proof_of_work(new_block)
+
+    # Step 4: Add the new block to the chain
+    new_block.block_hash = proof  # Set the block's hash to the proof found
+    added = blockchain.add_block(new_block)
+
+    # Step 5: Respond to the request
+    if added:
+        response = {
+            'message': 'New block mined successfully',
+            'block_number': new_block.index,
+            'transactions': new_block.transactions,
+            'nonce': new_block.nonce,
+            'previous_hash': new_block.previous_hash,
+            'hash': new_block.block_hash
+        }
+        # Clear unconfirmed transactions
+        blockchain.unconfirmed_transactions = []
+    else:
+        response = {'message': 'New block failed to be mined'}
+
+    return jsonify(response), 200
 
 
 @app.route('/')
