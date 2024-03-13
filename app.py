@@ -127,6 +127,12 @@ def new_transaction():
     return jsonify(response)
 
 
+@app.route('/mine', methods=['GET'])
+def mine():
+
+    return jsonify({'message': 'New block mined successfully'}), 200
+
+
 @app.route('/')
 def index():
     return '''
