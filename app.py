@@ -66,12 +66,14 @@ app = Flask(__name__)
 
 blockchain = Blockchain()
 
+
 @app.route('/chain', methods=['GET'])
 def get_chain():
-    chain_data = []
-    for block in blockchain.chain:
-        chain_data.append(block.__dict__)
-    return jsonify(chain_data, 200
+    chain_data = [block.__dict__ for block in blockchain.chain]
+    # for block in blockchain.chain:
+    #     chain_data.append(block.__dict__)
+    return jsonify(chain_data), 200
+
 
 @app.route('/transactions/new', methods=['POST'])
 def new_transaction():
@@ -86,6 +88,7 @@ def new_transaction():
     return jsonify(response)
 
 # Add Flask routes for API endpoints
+
 
 if __name__ == "__main__":
     app.run(debug=True)
