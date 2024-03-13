@@ -111,8 +111,6 @@ class Blockchain:
         return self.chain[-1]
 
 
-
-
 # Initialize Flask app
 app = Flask(__name__)
 
