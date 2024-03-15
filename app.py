@@ -6,8 +6,8 @@ from flask import Flask, jsonify, request
 
 
 class Block:
-    def __init__(self, index, transactions, timestamp, previous_hash, nonce=0, block_hash=None):
-        self.index = index
+    def __init__(self, block_index, transactions, timestamp, previous_hash, nonce=0, block_hash=None):
+        self.index = block_index
         self.transactions = transactions
         self.timestamp = timestamp
         self.previous_hash = previous_hash
@@ -40,7 +40,6 @@ class Blockchain:
         Verification includes checking that the previous hash referred in the block
         matches the hash of the latest block in the chain.
         :param block:
-        :param proof:
         :return:
         """
         if self.last_block.block_hash != block.previous_hash or not self.is_valid_proof(block, block.block_hash):
@@ -84,7 +83,7 @@ class Blockchain:
             return False  # No transactions to mine
 
         last_block = self.last_block
-        new_block = Block(index=last_block.index + 1,
+        new_block = Block(block_index=last_block.index + 1,
                           transactions=self.unconfirmed_transactions,
                           timestamp=time.time(),
                           previous_hash=last_block.block_hash,
@@ -100,7 +99,7 @@ class Blockchain:
     def register_node(self, address):
         """
         Add a new node to the list of nodes.
-        :param node:
+        :param address:
         :return:
         """
         parsed_url = urlparse(address)
@@ -162,7 +161,7 @@ def mine():
 
     # Step 2: Create a new block
     last_block = blockchain.last_block
-    new_block = Block(index=last_block.index + 1,
+    new_block = Block(block_index=last_block.index + 1,
                       transactions=blockchain.unconfirmed_transactions,
                       timestamp=time.time(),
                       previous_hash=last_block.block_hash)
