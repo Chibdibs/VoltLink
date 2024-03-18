@@ -2,6 +2,7 @@ import hashlib
 import time
 from urllib.parse import urlparse
 
+import requests
 from flask import Flask, jsonify, request
 
 
@@ -105,6 +106,38 @@ class Blockchain:
         parsed_url = urlparse(address)
         self.nodes.add(parsed_url.netloc)
 
+    def resolve_conflicts(self):
+        neighbours = self.nodes
+        new_chain = None
+        max_length = len(self.chain)
+        for node in neighbours:
+            response = requests.get(f'https://{node}/chain')
+
+            if response.status_code == 200:
+                length = response.json()['length']
+                chain = response.json()['chain']
+
+                # Check if the length is longer and the chain is valid
+                if length > max_length and self.valid_chain(chain):
+                    max_length = length
+                    new_chain = chain
+        if new_chain:
+            self.chain = new_chain
+            return True
+        return False
+
+    @staticmethod
+    def valid_chain(self, chain):
+        """
+        Determine if a given blockchain is valid.
+        :param self:
+        :param chain:
+        :return:
+        """
+        #TODO implement validation logic to check if chain is valid
+        # for now remain True
+        return True
+
     @property
     def last_block(self):
         return self.chain[-1]
@@ -112,7 +145,6 @@ class Blockchain:
 
 # Initialize Flask app
 app = Flask(__name__)
-
 blockchain = Blockchain()
 
 # Add Flask routes for API endpoints
@@ -189,6 +221,38 @@ def mine():
         response = {'message': 'New block failed to be mined'}
 
     return jsonify(response), 200
+
+
+# Basic node integration
+@app.route('/register_node', method=['POST'])
+def register_node():
+    values = request.get_json()
+    node = values.get('node')
+    if node is None:
+        return "Error: Please supply a valid node", 400
+
+    blockchain.register_node(node)
+    return jsonify({'message': f'Node {node} registered successfully'}), 200
+
+
+# Node endpoint
+@app.route('/nodes', methods=['GET'])
+def get_nodes():
+    nodes = list(blockchain.nodes)
+    return jsonify({'nodes': nodes}), 200
+
+
+# Basic network synchronization
+@app.route('/consensus', methods=['GET'])
+def consensus():
+    replaced = blockchain.resolve_conflicts()
+    if replaced:
+        response = {'message': 'Our chain was replaced', 'new_chain': blockchain.chain}
+    else:
+        response = {'message': 'Our chain is authoritative', 'chain': blockchain.chain}
+    return jsonify(response), 200
+
+
 
 
 @app.route('/')
