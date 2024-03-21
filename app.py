@@ -127,16 +127,31 @@ class Blockchain:
         return False
 
     @staticmethod
-    def valid_chain(self, chain):
+    def valid_chain(chain):
         """
         Determine if a given blockchain is valid.
-        :param self:
         :param chain:
         :return:
         """
-        #TODO implement validation logic to check if chain is valid
-        # for now remain True
-        return True
+        # Check if genesis block is valid. This step might involve specific checks
+        # depending on how genesis block is structured.
+
+        # Starting from the second block, verify the hash and the linkage
+        for i in range(1, len(chain)):
+            current_block = chain[i]
+            previous_block = chain[i-1]
+
+            # Recompute the hash of the previous block and ensure linkage
+            if current_block['previous_hash'] != Blockchain.compute_hash(previous_block):
+                return False
+
+            # Optionally, you can also check that the hash of each block is valid given its nonce
+            # This ensures that the proof of work is valid
+            computed_hash = Blockchain.compute_hash(current_block)
+            if not computed_hash.startswith('0' * Blockchain.difficulty):
+                return False
+
+        return True  # For now remain True
 
     @property
     def last_block(self):
@@ -146,6 +161,7 @@ class Blockchain:
 # Initialize Flask app
 app = Flask(__name__)
 blockchain = Blockchain()
+
 
 # Add Flask routes for API endpoints
 
@@ -251,8 +267,6 @@ def consensus():
     else:
         response = {'message': 'Our chain is authoritative', 'chain': blockchain.chain}
     return jsonify(response), 200
-
-
 
 
 @app.route('/')
