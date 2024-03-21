@@ -138,20 +138,35 @@ class Blockchain:
 
         # Starting from the second block, verify the hash and the linkage
         for i in range(1, len(chain)):
-            current_block = chain[i]
-            previous_block = chain[i-1]
+            current_block_data = chain[i]
+            previous_block_data = chain[i-1]
 
-            # Recompute the hash of the previous block and ensure linkage
-            if current_block['previous_hash'] != Blockchain.compute_hash(previous_block):
+            # Recreate Block instances from the stored data if necessary
+            # This step depends on how your block data is structured
+            current_block = Block(block_index=current_block_data['index'],
+                                  transactions=current_block_data['transactions'],
+                                  timestamp=current_block_data['timestamp'],
+                                  previous_hash=current_block_data['previous_hash'],
+                                  nonce=current_block_data['nonce'],
+                                  block_hash=current_block_data.get('block_hash'))
+
+            previous_block = Block(block_index=previous_block_data['index'],
+                                   transactions=previous_block_data['transactions'],
+                                   timestamp=previous_block_data['timestamp'],
+                                   previous_hash=previous_block_data['previous_hash'],
+                                   nonce=previous_block_data['nonce'],
+                                   block_hash=previous_block_data.get('block_hash'))
+
+            # Compute the hash of the previous block and ensure linkage
+            if current_block.previous_hash != previous_block.compute_hash():
                 return False
 
-            # Optionally, you can also check that the hash of each block is valid given its nonce
-            # This ensures that the proof of work is valid
-            computed_hash = Blockchain.compute_hash(current_block)
-            if not computed_hash.startswith('0' * Blockchain.difficulty):
+            # Validate the proof of work of the current block
+            if (not current_block.block_hash.startswith('0' * Blockchain.difficulty)
+                    or current_block.block_hash != current_block.compute_hash()):
                 return False
 
-        return True  # For now remain True
+        return True
 
     @property
     def last_block(self):
